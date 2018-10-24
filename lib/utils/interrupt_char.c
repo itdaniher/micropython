@@ -45,6 +45,11 @@ void mp_keyboard_interrupt(void) {
         MP_STATE_VM(sched_state) = MP_SCHED_PENDING;
     }
     #endif
+    #if MICROPY_SCHEDULER
+    if (MP_STATE_VM(sched_state) == MP_SCHED_IDLE) {
+        MP_STATE_VM(sched_state) = MP_SCHED_PENDING;
+    }
+    #endif
 }
 
 #endif
