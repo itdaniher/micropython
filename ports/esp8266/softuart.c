@@ -29,7 +29,7 @@ SOFTWARE.
 #include "os_type.h"
 #include "esp_mphal.h"
 #include "user_interface.h"
-#include "espmissingincludes.h"
+//#include "espmissingincludes.h"
 
 #include "softuart.h"
 
@@ -62,7 +62,7 @@ softuart_reg_t softuart_reg[] =
 uint8_t Softuart_Bitcount(uint32_t x)
 {
   uint8_t count;
- 
+
   for (count=0; x != 0; x>>=1) {
     if ( x & 0x01) {
       return count;
@@ -83,7 +83,7 @@ uint8_t Softuart_IsGpioValid(uint8_t gpio_id)
 }
 
 void Softuart_SetPinRx(Softuart *s, uint8_t gpio_id)
-{ 
+{
   if(! Softuart_IsGpioValid(gpio_id)) {
     //os_printf("SOFTUART GPIO not valid %d\r\n",gpio_id);
   } else {
@@ -94,7 +94,7 @@ void Softuart_SetPinRx(Softuart *s, uint8_t gpio_id)
 }
 
 void Softuart_SetPinTx(Softuart *s, uint8_t gpio_id)
-{ 
+{
   if(! Softuart_IsGpioValid(gpio_id)) {
     //os_printf("SOFTUART GPIO not valid %d\r\n",gpio_id);
   } else {
@@ -115,13 +115,13 @@ void Softuart_EnableRs485(Softuart *s, uint8_t gpio_id)
   s->pin_rs485_tx_enable = gpio_id;
 
   //enable pin as gpio
-  PIN_FUNC_SELECT(softuart_reg[gpio_id].gpio_mux_name,softuart_reg[gpio_id].gpio_func); 
+  PIN_FUNC_SELECT(softuart_reg[gpio_id].gpio_mux_name,softuart_reg[gpio_id].gpio_func);
 
   PIN_PULLUP_DIS(softuart_reg[gpio_id].gpio_mux_name);
-  
+
   //set low for tx idle (so other bus participants can send)
   GPIO_OUTPUT_SET(GPIO_ID_PIN(gpio_id), 0);
-  
+
   //os_printf("SOFTUART RS485 init done\r\n");
 }
 
@@ -155,11 +155,11 @@ void Softuart_Init(Softuart *s, uint32_t baudrate)
 
     //set pullup (UART idle is VDD)
     PIN_PULLUP_EN(s->pin_tx.gpio_mux_name);
-    
+
     //set high for tx idle
     GPIO_OUTPUT_SET(GPIO_ID_PIN(s->pin_tx.gpio_id), 1);
-    os_delay_us(100000);
-    
+    mp_hal_delay_us(100000);
+
     //os_printf("SOFTUART TX INIT DONE\r\n");
   }
 
@@ -172,7 +172,7 @@ void Softuart_Init(Softuart *s, uint32_t baudrate)
 
     //set pullup (UART idle is VDD)
     PIN_PULLUP_EN(s->pin_rx.gpio_mux_name);
-    
+
     //set to input -> disable output
     GPIO_DIS_OUTPUT(GPIO_ID_PIN(s->pin_rx.gpio_id));
 
@@ -199,7 +199,7 @@ void Softuart_Init(Softuart *s, uint32_t baudrate)
                  GPIO_PIN_INT_TYPE_SET(GPIO_PIN_INTR_DISABLE)  |
                  GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_DISABLE) |
                  GPIO_PIN_SOURCE_SET(GPIO_AS_PIN_SOURCE));
-    
+
     //clear interrupt handler status, basically writing a low to the output
     GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, BIT(s->pin_rx.gpio_id));
 
@@ -209,14 +209,14 @@ void Softuart_Init(Softuart *s, uint32_t baudrate)
 
     //globally enable GPIO interrupts
     ETS_GPIO_INTR_ENABLE();
-  
+
     //os_printf("SOFTUART RX INIT DONE\r\n");
   }
 
   //add instance to array of instances
   _Softuart_GPIO_Instances[s->pin_rx.gpio_id] = s;
   _Softuart_Instances_Count++;
-    
+
   //os_printf("SOFTUART INIT DONE\r\n");
 }
 
@@ -244,13 +244,13 @@ void Softuart_Intr_Handler(void *p)
     // Do something, for example, increment whatyouwant indirectly
     //check level
     level = GPIO_INPUT_GET(GPIO_ID_PIN(s->pin_rx.gpio_id));
-    if(!level) 
+    if(!level)
     {
       //pin is low
       //therefore we have a start bit
 
       //wait till start bit is half over so we can sample the next one in the center
-      os_delay_us(s->bit_time/2);
+      mp_hal_delay_us(s->bit_time/2);
 
       //now sample bits
       unsigned i;
@@ -261,11 +261,11 @@ void Softuart_Intr_Handler(void *p)
       {
         //delay for bit timing
         // NOTE signed arithmetic handles system_get_time() wrap-around
-        // NOTE using repeated calls to `os_delay_us` can accumulate overhead errors
+        // NOTE using repeated calls to `mp_hal_delay_us` can accumulate overhead errors
         // see https://forum.micropython.org/viewtopic.php?f=16&t=2204&start=10#p16935
         int32_t end_time = (int32_t) (start_time + (i + 1)*s->bit_time);
         while ( end_time - (int32_t)  system_get_time() > 0){};
-       
+
         //shift d to the right
         d >>= 1;
 
@@ -284,14 +284,14 @@ void Softuart_Intr_Handler(void *p)
         // save new data in buffer: tail points to where byte goes
         s->buffer.receive_buffer[s->buffer.receive_buffer_tail] = d; // save new byte
         s->buffer.receive_buffer_tail = next;
-      } 
+      }
       else
       {
         s->buffer.buffer_overflow = 1;
       }
 
       //wait for stop bit
-      os_delay_us(s->bit_time);
+      mp_hal_delay_us(s->bit_time);
       //done
     }
     //clear interrupt
@@ -391,7 +391,7 @@ void Softuart_Putchar(Softuart *s, char data)
   {
     //delay for bit timing
     // NOTE signed arithmetic handles system_get_time() wrap-around
-    // NOTE using repeated calls to `os_delay_us` can accumulate overhead errors
+    // NOTE using repeated calls to `mp_hal_delay_us` can accumulate overhead errors
     // see https://forum.micropython.org/viewtopic.php?f=16&t=2204&start=10#p16935
     end_time = (int32_t) (start_time + (i + 1)*s->bit_time);
     while ( end_time - (int32_t)  system_get_time() > 0){};
@@ -404,9 +404,9 @@ void Softuart_Putchar(Softuart *s, char data)
   GPIO_OUTPUT_SET(GPIO_ID_PIN(s->pin_tx.gpio_id), 1);
 
   // Delay after byte, for new sync
-  os_delay_us(s->bit_time*6);
+  mp_hal_delay_us(s->bit_time*6);
 
-  //if rs485 set tx disable 
+  //if rs485 set tx disable
   if(s->is_rs485 == 1)
   {
     GPIO_OUTPUT_SET(GPIO_ID_PIN(s->pin_rs485_tx_enable), 0);
@@ -432,7 +432,7 @@ uint8_t Softuart_Readline(Softuart *s, char* Buffer, uint8_t MaxLen )
     if(NextChar == '\r')
     {
       continue;
-    } else if(NextChar == '\n') 
+    } else if(NextChar == '\n')
     {
       //break only if we already found a character
       //if it was .e.g. only \r, we wait for the first useful character

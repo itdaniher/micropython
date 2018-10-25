@@ -373,26 +373,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_pin_on_obj, pyb_pin_on);
 
 // pin.irq(handler=None, trigger=IRQ_FALLING|IRQ_RISING, hard=False)
 STATIC mp_obj_t pyb_pin_irq(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-<<<<<<< HEAD:ports/esp8266/machine_pin.c
     enum { ARG_handler, ARG_trigger, ARG_hard };
-||||||| merged common ancestors
-    enum { ARG_trigger, ARG_handler };
-=======
-    enum { ARG_trigger, ARG_handler, ARG_hard };
->>>>>>> 5583ac9c33e2cd500f43bd60c4d27ec9a01ef1dc:esp8266/machine_pin.c
     static const mp_arg_t allowed_args[] = {
-<<<<<<< HEAD:ports/esp8266/machine_pin.c
         { MP_QSTR_handler, MP_ARG_OBJ, {.u_obj = mp_const_none} },
         { MP_QSTR_trigger, MP_ARG_INT, {.u_int = GPIO_PIN_INTR_POSEDGE | GPIO_PIN_INTR_NEGEDGE} },
         { MP_QSTR_hard, MP_ARG_BOOL, {.u_bool = false} },
-||||||| merged common ancestors
         { MP_QSTR_trigger, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_handler, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
-=======
-        { MP_QSTR_trigger, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
-        { MP_QSTR_handler, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
-        { MP_QSTR_hard, MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = false} },
->>>>>>> 5583ac9c33e2cd500f43bd60c4d27ec9a01ef1dc:esp8266/machine_pin.c
     };
     pyb_pin_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -412,15 +399,8 @@ STATIC mp_obj_t pyb_pin_irq(size_t n_args, const mp_obj_t *pos_args, mp_map_t *k
         }
         ETS_GPIO_INTR_DISABLE();
         MP_STATE_PORT(pin_irq_handler)[self->phys_port] = handler;
-<<<<<<< HEAD:ports/esp8266/machine_pin.c
         pin_irq_is_hard[self->phys_port] = args[ARG_hard].u_bool;
         SET_TRIGGER(self->phys_port, trigger);
-||||||| merged common ancestors
-        SET_TRIGGER(self->phys_port, args[ARG_trigger].u_int);
-=======
-        pin_irq_is_hard[self->phys_port] = args[ARG_hard].u_bool;
-        SET_TRIGGER(self->phys_port, args[ARG_trigger].u_int);
->>>>>>> 5583ac9c33e2cd500f43bd60c4d27ec9a01ef1dc:esp8266/machine_pin.c
         GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << self->phys_port);
         ETS_GPIO_INTR_ENABLE();
     }
